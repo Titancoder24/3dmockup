@@ -1,140 +1,182 @@
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { getAllDevices } from '../../devices/registry'
 import { getAllTemplates } from '../../templates/registry'
-import { Smartphone, Film, Plus, TrendingUp, Users, Download } from 'lucide-react'
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card'
+import { Badge } from '../../components/ui/badge'
+import { Button } from '../../components/ui/button'
+import { Separator } from '../../components/ui/separator'
+
+import {
+  MonitorSmartphone,
+  Clapperboard,
+  TrendingUp,
+  Activity,
+  ArrowRight,
+  Plus,
+  Zap,
+  Clock,
+  Smartphone,
+  Tablet,
+  Laptop,
+  Watch,
+} from 'lucide-react'
 
 export default function AdminDashboard() {
   const devices = getAllDevices()
   const templates = getAllTemplates()
 
   const stats = [
-    { label: 'Total Devices', value: devices.length, icon: Smartphone, color: 'text-blue-400' },
-    { label: 'Motion Templates', value: templates.length, icon: Film, color: 'text-purple-400' },
-    { label: 'Total Exports', value: '—', icon: Download, color: 'text-green-400' },
-    { label: 'Active Users', value: '—', icon: Users, color: 'text-amber-400' },
+    { label: 'Devices', value: devices.length, icon: MonitorSmartphone, color: 'text-primary' },
+    { label: 'Templates', value: templates.length, icon: Clapperboard, color: 'text-accent-500' },
+    { label: 'Exports', value: '—', icon: TrendingUp, color: 'text-emerald-500' },
+    { label: 'Active', value: '1', icon: Activity, color: 'text-blue-500' },
   ]
 
+  const fadeUp = {
+    hidden: { opacity: 0, y: 8 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  }
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-8 max-w-6xl mx-auto space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-sm text-surface-400 mt-1">
-          Manage devices, templates, and monitor usage.
-        </p>
-      </div>
+      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="font-heading text-3xl font-extrabold tracking-tight">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">Overview of your mockup studio</p>
+      </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={{ show: { transition: { staggerChildren: 0.05 } } }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="bg-surface-900 border border-surface-800 rounded-xl p-4"
-          >
-            <div className="flex items-center justify-between">
-              <stat.icon size={20} className={stat.color} />
-              <TrendingUp size={14} className="text-surface-600" />
-            </div>
-            <p className="text-2xl font-bold text-white mt-3">{stat.value}</p>
-            <p className="text-xs text-surface-400 mt-1">{stat.label}</p>
-          </div>
+          <motion.div key={stat.label} variants={fadeUp}>
+            <Card className="py-5 gap-3">
+              <CardContent className="flex items-center gap-4">
+                <div className="size-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                  <stat.icon className={`size-5 ${stat.color}`} />
+                </div>
+                <div>
+                  <p className="font-heading text-2xl font-extrabold">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Link
-          to="/admin/devices"
-          className="bg-surface-900 border border-surface-800 rounded-xl p-6 hover:border-primary-500/30 transition-colors group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-              <Plus size={20} className="text-blue-400" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-white group-hover:text-primary-400 transition-colors">
-                Create New Device
-              </p>
-              <p className="text-xs text-surface-400">
-                Upload images and use AI to generate a Three.js component
-              </p>
-            </div>
-          </div>
+        <Link to="/admin/devices">
+          <Card className="py-5 gap-0 group cursor-pointer hover:border-primary/30 transition-colors">
+            <CardContent className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Plus className="size-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-heading font-bold">Create Device</p>
+                  <p className="text-xs text-muted-foreground">AI-powered device architect</p>
+                </div>
+              </div>
+              <ArrowRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+            </CardContent>
+          </Card>
         </Link>
 
-        <Link
-          to="/admin/templates"
-          className="bg-surface-900 border border-surface-800 rounded-xl p-6 hover:border-primary-500/30 transition-colors group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-              <Plus size={20} className="text-purple-400" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-white group-hover:text-primary-400 transition-colors">
-                Create Motion Template
-              </p>
-              <p className="text-xs text-surface-400">
-                Design animations with AI assistance or manual code
-              </p>
-            </div>
-          </div>
+        <Link to="/admin/templates">
+          <Card className="py-5 gap-0 group cursor-pointer hover:border-accent-500/30 transition-colors">
+            <CardContent className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-lg bg-accent-500/10 flex items-center justify-center">
+                  <Zap className="size-5 text-accent-500" />
+                </div>
+                <div>
+                  <p className="font-heading font-bold">Create Template</p>
+                  <p className="text-xs text-muted-foreground">Design motion sequences</p>
+                </div>
+              </div>
+              <ArrowRight className="size-4 text-muted-foreground group-hover:text-accent-500 group-hover:translate-x-0.5 transition-all" />
+            </CardContent>
+          </Card>
         </Link>
       </div>
 
-      {/* Device Library */}
-      <div>
-        <h2 className="text-lg font-semibold text-white mb-3">Device Library</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {devices.map((device) => (
-            <div
-              key={device.metadata.id}
-              className="bg-surface-900 border border-surface-800 rounded-lg p-3"
-            >
-              <div className="w-full aspect-[3/4] bg-surface-800 rounded-md mb-2 flex items-center justify-center">
-                <span className="text-3xl">
-                  {device.metadata.category === 'phone' && '📱'}
-                  {device.metadata.category === 'tablet' && '📱'}
-                  {device.metadata.category === 'laptop' && '💻'}
-                  {device.metadata.category === 'watch' && '⌚'}
-                </span>
-              </div>
-              <p className="text-xs font-medium text-surface-200 truncate">{device.metadata.name}</p>
-              <p className="text-[10px] text-surface-500">{device.metadata.brand}</p>
-              <div className="flex gap-1 mt-1">
-                {device.metadata.colors.map((c) => (
-                  <div
-                    key={c.hex}
-                    className="w-2.5 h-2.5 rounded-full border border-surface-700"
-                    style={{ backgroundColor: c.hex }}
-                  />
-                ))}
-              </div>
+      {/* Content Lists */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Devices */}
+        <Card className="gap-0 py-0">
+          <CardHeader className="py-4 border-b">
+            <CardTitle className="text-sm font-heading font-bold">Device Library</CardTitle>
+            <div className="col-start-2 row-span-2 row-start-1 self-center">
+              <Link to="/admin/devices">
+                <Button variant="link" size="sm" className="text-xs">View all →</Button>
+              </Link>
             </div>
-          ))}
-        </div>
-      </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {devices.slice(0, 5).map((device, i) => (
+              <div key={device.metadata.id}>
+                <div className="flex items-center gap-3 px-6 py-3 hover:bg-secondary/30 transition-colors">
+                  <div className="size-8 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                    {device.metadata.category === 'phone' && <Smartphone className="size-4 text-muted-foreground" />}
+                    {device.metadata.category === 'tablet' && <Tablet className="size-4 text-muted-foreground" />}
+                    {device.metadata.category === 'laptop' && <Laptop className="size-4 text-muted-foreground" />}
+                    {device.metadata.category === 'watch' && <Watch className="size-4 text-muted-foreground" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{device.metadata.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{device.metadata.brand}</p>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    {device.metadata.colors.slice(0, 3).map((c) => (
+                      <div key={c.hex} className="size-2.5 rounded-full border border-border" style={{ backgroundColor: c.hex }} />
+                    ))}
+                  </div>
+                </div>
+                {i < devices.slice(0, 5).length - 1 && <Separator />}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
-      {/* Template Library */}
-      <div>
-        <h2 className="text-lg font-semibold text-white mb-3">Template Library</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {templates.map((template) => (
-            <div
-              key={template.id}
-              className="bg-surface-900 border border-surface-800 rounded-lg p-4"
-            >
-              <p className="text-sm font-medium text-surface-200">{template.name}</p>
-              <p className="text-xs text-surface-500 mt-1 line-clamp-2">{template.description}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-surface-800 text-surface-400 border border-surface-700">
-                  {template.category}
-                </span>
-                <span className="text-[10px] text-surface-500">{template.duration}s</span>
-              </div>
+        {/* Templates */}
+        <Card className="gap-0 py-0">
+          <CardHeader className="py-4 border-b">
+            <CardTitle className="text-sm font-heading font-bold">Motion Templates</CardTitle>
+            <div className="col-start-2 row-span-2 row-start-1 self-center">
+              <Link to="/admin/templates">
+                <Button variant="link" size="sm" className="text-xs">View all →</Button>
+              </Link>
             </div>
-          ))}
-        </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {templates.slice(0, 5).map((tpl, i) => (
+              <div key={tpl.id}>
+                <div className="flex items-center gap-3 px-6 py-3 hover:bg-secondary/30 transition-colors">
+                  <div className="size-8 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                    <Clapperboard className="size-4 text-accent-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{tpl.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{tpl.category}</p>
+                  </div>
+                  <Badge variant="secondary" className="text-[9px] font-mono py-0 shrink-0">
+                    <Clock className="size-2.5" />
+                    {tpl.duration}s
+                  </Badge>
+                </div>
+                {i < templates.slice(0, 5).length - 1 && <Separator />}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

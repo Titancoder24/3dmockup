@@ -1,18 +1,32 @@
 import { useState } from 'react'
 import { useSettingsStore } from '../../store'
-import { Key, Eye, EyeOff, Save, Shield, Zap, RefreshCw } from 'lucide-react'
+import { motion } from 'framer-motion'
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card'
+import { Button } from '../../components/ui/button'
+import { Input } from '../../components/ui/input'
+import { Badge } from '../../components/ui/badge'
+import { Switch } from '../../components/ui/switch'
+import { Separator } from '../../components/ui/separator'
+import { ToggleGroup, ToggleGroupItem } from '../../components/ui/toggle-group'
+
+import {
+  KeyRound,
+  Eye,
+  EyeOff,
+  Save,
+  ShieldCheck,
+  Zap,
+  Globe,
+  HardDrive,
+  ExternalLink,
+} from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminSettings() {
   const {
-    geminiApiKey,
-    openrouterApiKey,
-    autoSave,
-    autoSaveInterval,
-    setGeminiApiKey,
-    setOpenrouterApiKey,
-    setAutoSave,
-    setAutoSaveInterval,
+    geminiApiKey, openrouterApiKey, autoSave, autoSaveInterval,
+    setGeminiApiKey, setOpenrouterApiKey, setAutoSave, setAutoSaveInterval,
   } = useSettingsStore()
 
   const [showGeminiKey, setShowGeminiKey] = useState(false)
@@ -23,215 +37,170 @@ export default function AdminSettings() {
   const handleSave = () => {
     setGeminiApiKey(localGeminiKey)
     setOpenrouterApiKey(localOpenrouterKey)
-    toast.success('Settings saved successfully!')
+    toast.success('Settings saved')
   }
 
   const testGeminiKey = async () => {
-    if (!localGeminiKey) {
-      toast.error('Enter a Gemini API key first')
-      return
-    }
+    if (!localGeminiKey) return toast.error('Enter a Gemini API key first')
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models?key=${localGeminiKey}`
-      )
-      if (response.ok) {
-        toast.success('Gemini API key is valid!')
-      } else {
-        toast.error('Invalid Gemini API key')
-      }
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${localGeminiKey}`)
+      if (res.ok) toast.success('Gemini API key is valid')
+      else toast.error('Invalid API key')
     } catch {
-      toast.error('Failed to connect to Gemini API')
-    }
-  }
-
-  const testOpenrouterKey = async () => {
-    if (!localOpenrouterKey) {
-      toast.error('Enter an OpenRouter API key first')
-      return
-    }
-    try {
-      const response = await fetch('https://openrouter.ai/api/v1/models', {
-        headers: { Authorization: `Bearer ${localOpenrouterKey}` },
-      })
-      if (response.ok) {
-        toast.success('OpenRouter API key is valid!')
-      } else {
-        toast.error('Invalid OpenRouter API key')
-      }
-    } catch {
-      toast.error('Failed to connect to OpenRouter API')
+      toast.error('Connection failed')
     }
   }
 
   return (
-    <div className="p-6 max-w-2xl space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="text-sm text-surface-400 mt-1">
-          Configure API keys and application preferences. All settings are stored locally in your browser.
-        </p>
-      </div>
+    <div className="p-8 max-w-3xl mx-auto space-y-8">
+      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="font-heading text-3xl font-extrabold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">Configure API keys and preferences</p>
+      </motion.div>
 
-      {/* API Keys Section */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Key size={18} className="text-primary-400" />
-          <h2 className="text-lg font-semibold text-white">API Keys</h2>
-        </div>
+      {/* API Keys */}
+      <Card className="gap-0 py-0">
+        <CardHeader className="py-4 border-b">
+          <CardTitle className="text-sm font-heading flex items-center gap-2">
+            <KeyRound className="size-4 text-primary" />
+            API Keys
+          </CardTitle>
+          <CardDescription className="text-xs">Connect your AI services</CardDescription>
+        </CardHeader>
 
-        <div className="bg-surface-900 border border-surface-800 rounded-xl p-5 space-y-5">
-          {/* Gemini API Key */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-surface-200">
-              <Zap size={14} className="text-yellow-400" />
-              Google Gemini API Key
-            </label>
-            <p className="text-xs text-surface-500">
-              Used for device image analysis and code generation. Get your key at{' '}
+        <CardContent className="p-5 space-y-6">
+          {/* Gemini */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium flex items-center gap-2">
+                <Zap className="size-3.5 text-amber-500" />
+                Gemini API Key
+              </label>
               <a
                 href="https://aistudio.google.com/apikey"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary-400 hover:underline"
+                className="text-xs text-primary hover:underline flex items-center gap-1"
               >
-                Google AI Studio
+                Get key <ExternalLink className="size-3" />
               </a>
-            </p>
+            </div>
             <div className="flex gap-2">
               <div className="flex-1 relative">
-                <input
+                <Input
                   type={showGeminiKey ? 'text' : 'password'}
                   value={localGeminiKey}
                   onChange={(e) => setLocalGeminiKey(e.target.value)}
-                  placeholder="AIzaSy..."
-                  className="w-full px-3 py-2.5 bg-surface-800 border border-surface-700 rounded-lg
-                    text-sm text-surface-200 placeholder-surface-600 focus:outline-none focus:border-primary-500
-                    pr-10 font-mono"
+                  placeholder="AIza..."
+                  className="pr-10 font-mono text-sm"
                 />
                 <button
                   onClick={() => setShowGeminiKey(!showGeminiKey)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-500 hover:text-surface-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showGeminiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showGeminiKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
-              <button
-                onClick={testGeminiKey}
-                className="px-3 py-2 bg-surface-800 border border-surface-700 rounded-lg text-xs text-surface-400
-                  hover:border-surface-600 hover:text-surface-300 transition-colors"
-              >
-                Test
-              </button>
+              <Button variant="outline" onClick={testGeminiKey}>Test</Button>
             </div>
           </div>
 
-          {/* OpenRouter API Key */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-surface-200">
-              <Shield size={14} className="text-green-400" />
-              OpenRouter API Key
-            </label>
-            <p className="text-xs text-surface-500">
-              Used for cross-validation with Claude and other models. Get your key at{' '}
+          <Separator />
+
+          {/* OpenRouter */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium flex items-center gap-2">
+                <Globe className="size-3.5 text-emerald-500" />
+                OpenRouter API Key
+              </label>
               <a
                 href="https://openrouter.ai/keys"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary-400 hover:underline"
+                className="text-xs text-primary hover:underline flex items-center gap-1"
               >
-                OpenRouter
+                Get key <ExternalLink className="size-3" />
               </a>
-            </p>
+            </div>
             <div className="flex gap-2">
               <div className="flex-1 relative">
-                <input
+                <Input
                   type={showOpenrouterKey ? 'text' : 'password'}
                   value={localOpenrouterKey}
                   onChange={(e) => setLocalOpenrouterKey(e.target.value)}
                   placeholder="sk-or-..."
-                  className="w-full px-3 py-2.5 bg-surface-800 border border-surface-700 rounded-lg
-                    text-sm text-surface-200 placeholder-surface-600 focus:outline-none focus:border-primary-500
-                    pr-10 font-mono"
+                  className="pr-10 font-mono text-sm"
                 />
                 <button
                   onClick={() => setShowOpenrouterKey(!showOpenrouterKey)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-500 hover:text-surface-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showOpenrouterKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showOpenrouterKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
-              <button
-                onClick={testOpenrouterKey}
-                className="px-3 py-2 bg-surface-800 border border-surface-700 rounded-lg text-xs text-surface-400
-                  hover:border-surface-600 hover:text-surface-300 transition-colors"
-              >
-                Test
-              </button>
+              <Button variant="outline">Test</Button>
             </div>
           </div>
 
-          {/* Security Notice */}
-          <div className="flex items-start gap-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg">
-            <Shield size={14} className="text-amber-400 mt-0.5 shrink-0" />
-            <p className="text-xs text-amber-300/80">
-              API keys are stored in your browser's localStorage and never sent to any server other than
-              the respective API providers (Google, OpenRouter). Clear browser data to remove them.
-            </p>
-          </div>
-        </div>
-      </section>
+          <Separator />
 
-      {/* Auto-Save Section */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <RefreshCw size={18} className="text-primary-400" />
-          <h2 className="text-lg font-semibold text-white">Auto-Save</h2>
-        </div>
-
-        <div className="bg-surface-900 border border-surface-800 rounded-xl p-5 space-y-4">
-          <label className="flex items-center justify-between cursor-pointer">
+          {/* Security notice */}
+          <div className="flex items-start gap-3 p-3.5 bg-amber-500/5 border border-amber-500/10 rounded-lg">
+            <ShieldCheck className="size-4 text-amber-500 mt-0.5 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-surface-200">Enable Auto-Save</p>
-              <p className="text-xs text-surface-500">Automatically save project state periodically</p>
+              <p className="text-xs font-semibold text-amber-400">Stored locally</p>
+              <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                Keys are stored in your browser's localStorage. They are never sent to any server other than the API endpoints.
+              </p>
             </div>
-            <input
-              type="checkbox"
-              checked={autoSave}
-              onChange={(e) => setAutoSave(e.target.checked)}
-              className="w-5 h-5 rounded bg-surface-800 border-surface-600 text-primary-500 focus:ring-primary-500/30"
-            />
-          </label>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Auto-save */}
+      <Card className="gap-0 py-0">
+        <CardHeader className="py-4 border-b">
+          <CardTitle className="text-sm font-heading flex items-center gap-2">
+            <HardDrive className="size-4 text-accent-500" />
+            Auto-Save
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Auto-save project</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Periodically save your project state</p>
+            </div>
+            <Switch checked={autoSave} onCheckedChange={setAutoSave} />
+          </div>
 
           {autoSave && (
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-surface-300">
-                Save Interval
-              </label>
-              <select
-                value={autoSaveInterval}
-                onChange={(e) => setAutoSaveInterval(parseInt(e.target.value))}
-                className="w-full px-3 py-2 bg-surface-800 border border-surface-700 rounded-lg text-sm text-surface-200"
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+              <Separator className="my-3" />
+              <p className="text-xs font-medium text-muted-foreground mb-2.5">Save interval</p>
+              <ToggleGroup
+                type="single"
+                value={String(autoSaveInterval)}
+                onValueChange={(val) => val && setAutoSaveInterval(Number(val))}
+                variant="outline"
               >
-                <option value={15000}>Every 15 seconds</option>
-                <option value={30000}>Every 30 seconds</option>
-                <option value={60000}>Every 1 minute</option>
-                <option value={300000}>Every 5 minutes</option>
-              </select>
-            </div>
+                <ToggleGroupItem value="15000" className="text-xs">15s</ToggleGroupItem>
+                <ToggleGroupItem value="30000" className="text-xs">30s</ToggleGroupItem>
+                <ToggleGroupItem value="60000" className="text-xs">1m</ToggleGroupItem>
+                <ToggleGroupItem value="300000" className="text-xs">5m</ToggleGroupItem>
+              </ToggleGroup>
+            </motion.div>
           )}
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
-      {/* Save Button */}
-      <button
-        onClick={handleSave}
-        className="flex items-center gap-2 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors"
-      >
-        <Save size={16} />
+      {/* Save */}
+      <Button size="lg" onClick={handleSave}>
+        <Save className="size-4" />
         Save Settings
-      </button>
+      </Button>
     </div>
   )
 }

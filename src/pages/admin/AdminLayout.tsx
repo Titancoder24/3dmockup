@@ -1,87 +1,117 @@
 import { useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
+import { motion } from 'framer-motion'
+
+import { Button } from '../../components/ui/button'
+import { Separator } from '../../components/ui/separator'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip'
+
 import {
   LayoutDashboard,
-  Smartphone,
-  Film,
-  BarChart3,
+  MonitorSmartphone,
+  Clapperboard,
   Settings,
-  ChevronLeft,
-  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Layers3,
+  ArrowLeft,
 } from 'lucide-react'
 
 const navItems = [
-  { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
-  { path: '/admin/devices', icon: Smartphone, label: 'Device Manager' },
-  { path: '/admin/templates', icon: Film, label: 'Motion Templates' },
-  { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
-  { path: '/admin/settings', icon: Settings, label: 'Settings' },
+  { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+  { label: 'Devices', path: '/admin/devices', icon: MonitorSmartphone },
+  { label: 'Templates', path: '/admin/templates', icon: Clapperboard },
+  { label: 'Settings', path: '/admin/settings', icon: Settings },
 ]
 
 export default function AdminLayout() {
   const location = useLocation()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className="h-screen flex bg-surface-950">
-      {/* Sidebar */}
-      <aside
-        className={`${
-          sidebarOpen ? 'w-56' : 'w-16'
-        } bg-surface-900 border-r border-surface-800 flex flex-col transition-all duration-200`}
-      >
-        {/* Logo */}
-        <div className="h-14 flex items-center justify-between px-4 border-b border-surface-800">
-          {sidebarOpen && (
-            <span className="text-sm font-bold text-white tracking-tight">ADMIN PANEL</span>
-          )}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded-lg hover:bg-surface-800 text-surface-400 transition-colors"
-          >
-            {sidebarOpen ? <ChevronLeft size={16} /> : <Menu size={16} />}
-          </button>
-        </div>
+    <TooltipProvider delayDuration={200}>
+      <div className="h-screen flex bg-background">
+        {/* Sidebar */}
+        <nav className={`h-full border-r bg-card flex flex-col transition-all duration-300 ${collapsed ? 'w-14' : 'w-56'}`}>
+          {/* Logo */}
+          <div className="h-12 flex items-center px-3 border-b shrink-0 gap-2.5">
+            <div className="size-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
+              <Layers3 className="size-4 text-primary-foreground" />
+            </div>
+            {!collapsed && (
+              <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-heading text-sm font-bold tracking-tight">
+                Admin
+              </motion.span>
+            )}
+          </div>
 
-        {/* Nav */}
-        <nav className="flex-1 py-3 space-y-0.5 px-2">
-          {navItems.map((item) => {
-            const isActive = item.exact
-              ? location.pathname === item.path
-              : location.pathname.startsWith(item.path)
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                  isActive
-                    ? 'bg-primary-500/10 text-primary-400'
-                    : 'text-surface-400 hover:bg-surface-800 hover:text-surface-200'
-                }`}
-              >
-                <item.icon size={18} />
-                {sidebarOpen && <span>{item.label}</span>}
-              </Link>
-            )
-          })}
+          {/* Back */}
+          <div className="px-2 pt-2">
+            <Link to="/">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size={collapsed ? 'icon-sm' : 'sm'} className={collapsed ? '' : 'w-full justify-start'}>
+                    <ArrowLeft className="size-3.5" />
+                    {!collapsed && 'Back to Studio'}
+                  </Button>
+                </TooltipTrigger>
+                {collapsed && <TooltipContent side="right">Back to Studio</TooltipContent>}
+              </Tooltip>
+            </Link>
+          </div>
+
+          <Separator className="mx-2 mt-2" />
+
+          {/* Nav */}
+          <div className="flex-1 px-2 py-2 space-y-0.5">
+            {navItems.map((item) => {
+              const isActive = item.path === '/admin'
+                ? location.pathname === '/admin'
+                : location.pathname.startsWith(item.path)
+
+              return (
+                <Link key={item.path} to={item.path}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={isActive ? 'secondary' : 'ghost'}
+                        size={collapsed ? 'icon-sm' : 'sm'}
+                        className={`
+                          relative
+                          ${collapsed ? '' : 'w-full justify-start'}
+                          ${isActive ? 'text-primary font-semibold' : 'text-muted-foreground'}
+                        `}
+                      >
+                        {isActive && (
+                          <motion.div
+                            layoutId="admin-active-indicator"
+                            className="absolute left-0 top-1 bottom-1 w-0.5 bg-primary rounded-full"
+                          />
+                        )}
+                        <item.icon className="size-4" />
+                        {!collapsed && item.label}
+                      </Button>
+                    </TooltipTrigger>
+                    {collapsed && <TooltipContent side="right">{item.label}</TooltipContent>}
+                  </Tooltip>
+                </Link>
+              )
+            })}
+          </div>
+
+          {/* Collapse */}
+          <div className="px-2 py-2 border-t">
+            <Button variant="ghost" size="icon-sm" className="w-full" onClick={() => setCollapsed(!collapsed)}>
+              {collapsed ? <PanelLeftOpen className="size-3.5" /> : <PanelLeftClose className="size-3.5" />}
+            </Button>
+          </div>
         </nav>
 
-        {/* Back to app */}
-        <div className="p-3 border-t border-surface-800">
-          <Link
-            to="/"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-surface-400 hover:bg-surface-800 hover:text-surface-200 transition-colors"
-          >
-            <ChevronLeft size={16} />
-            {sidebarOpen && <span>Back to App</span>}
-          </Link>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <Outlet />
-      </main>
-    </div>
+        {/* Main */}
+        <main className="flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
+    </TooltipProvider>
   )
 }

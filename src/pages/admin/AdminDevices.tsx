@@ -1,48 +1,51 @@
 import { useCallback, useState } from 'react'
+import { motion } from 'framer-motion'
 import { useDropzone } from 'react-dropzone'
 import { useAdminStore, useSettingsStore } from '../../store'
 import { analyzeWithGemini, generateDeviceCode } from '../../utils/ai'
 import { getAllDevices } from '../../devices/registry'
+
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card'
+import { Button } from '../../components/ui/button'
+import { Badge } from '../../components/ui/badge'
+import { Separator } from '../../components/ui/separator'
+import { ScrollArea } from '../../components/ui/scroll-area'
+
 import {
-  Upload,
+  CloudUpload,
   Zap,
-  Code,
-  Eye,
+  Code2,
   Trash2,
   Loader2,
-  CheckCircle,
-  X,
+  Copy,
+  Plus,
+  Library,
+  Smartphone,
+  Laptop,
+  Tablet,
+  Watch,
+  CheckCircle2,
+  Sparkles,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminDevices() {
   const {
-    uploadedImages,
-    generatedCode,
-    isAnalyzing,
-    isGenerating,
-    addUploadedImage,
-    removeUploadedImage,
-    setIsAnalyzing,
-    setGeneratedCode,
-    setIsGenerating,
-    setAnalysisResults,
-    resetDeviceCreation,
+    uploadedImages, generatedCode, isAnalyzing, isGenerating,
+    addUploadedImage, removeUploadedImage, setIsAnalyzing,
+    setGeneratedCode, setIsGenerating, setAnalysisResults, resetDeviceCreation,
   } = useAdminStore()
 
   const { geminiApiKey } = useSettingsStore()
   const [analysisText, setAnalysisText] = useState('')
-  const [activeTab, setActiveTab] = useState<'create' | 'library'>('library')
-
   const devices = getAllDevices()
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       acceptedFiles.forEach((file) => {
         const reader = new FileReader()
-        reader.onload = () => {
-          addUploadedImage(reader.result as string)
-        }
+        reader.onload = () => addUploadedImage(reader.result as string)
         reader.readAsDataURL(file)
       })
     },
@@ -57,15 +60,8 @@ export default function AdminDevices() {
   })
 
   const handleAnalyze = async (model: 'gemini-2.0-flash' | 'gemini-2.0-pro') => {
-    if (!geminiApiKey) {
-      toast.error('Set your Gemini API key in Settings first')
-      return
-    }
-    if (uploadedImages.length === 0) {
-      toast.error('Upload device images first')
-      return
-    }
-
+    if (!geminiApiKey) return toast.error('Set your Gemini API key in Settings first')
+    if (uploadedImages.length === 0) return toast.error('Upload device images first')
     setIsAnalyzing(true)
     try {
       const result = await analyzeWithGemini(geminiApiKey, uploadedImages, model)
@@ -80,20 +76,13 @@ export default function AdminDevices() {
   }
 
   const handleGenerateCode = async () => {
-    if (!geminiApiKey) {
-      toast.error('Set your Gemini API key in Settings first')
-      return
-    }
-    if (!analysisText) {
-      toast.error('Run analysis first')
-      return
-    }
-
+    if (!geminiApiKey) return toast.error('Set your Gemini API key in Settings first')
+    if (!analysisText) return toast.error('Run analysis first')
     setIsGenerating(true)
     try {
       const code = await generateDeviceCode(geminiApiKey, analysisText)
       setGeneratedCode(code)
-      toast.success('Code generated successfully!')
+      toast.success('Code generated!')
     } catch (error) {
       toast.error(`Code generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
@@ -101,228 +90,203 @@ export default function AdminDevices() {
     }
   }
 
+  const deviceIcon = (cat: string) => {
+    const cls = "size-5 text-muted-foreground"
+    if (cat === 'phone') return <Smartphone className={cls} />
+    if (cat === 'tablet') return <Tablet className={cls} />
+    if (cat === 'laptop') return <Laptop className={cls} />
+    if (cat === 'watch') return <Watch className={cls} />
+    return <Smartphone className={cls} />
+  }
+
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Device Manager</h1>
-          <p className="text-sm text-surface-400 mt-1">
-            Create and manage 3D device components using AI analysis.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setActiveTab('library')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === 'library'
-                ? 'bg-primary-500/10 text-primary-400 border border-primary-500/30'
-                : 'bg-surface-800 text-surface-400 border border-surface-700'
-            }`}
-          >
-            Library ({devices.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('create')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === 'create'
-                ? 'bg-primary-500/10 text-primary-400 border border-primary-500/30'
-                : 'bg-surface-800 text-surface-400 border border-surface-700'
-            }`}
-          >
-            + Create New
-          </button>
-        </div>
+    <div className="p-8 max-w-6xl mx-auto space-y-6">
+      <div>
+        <h1 className="font-heading text-3xl font-extrabold tracking-tight">Devices</h1>
+        <p className="text-sm text-muted-foreground mt-1">Manage hardware models and create new ones with AI</p>
       </div>
 
-      {activeTab === 'library' && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {devices.map((device) => (
-            <div
-              key={device.metadata.id}
-              className="bg-surface-900 border border-surface-800 rounded-xl p-4 hover:border-surface-700 transition-colors"
-            >
-              <div className="w-full aspect-[3/4] bg-surface-800 rounded-lg mb-3 flex items-center justify-center">
-                <span className="text-4xl">
-                  {device.metadata.category === 'phone' && '📱'}
-                  {device.metadata.category === 'tablet' && '📱'}
-                  {device.metadata.category === 'laptop' && '💻'}
-                  {device.metadata.category === 'watch' && '⌚'}
-                </span>
-              </div>
-              <p className="text-sm font-medium text-surface-200">{device.metadata.name}</p>
-              <p className="text-xs text-surface-500">{device.metadata.brand} &middot; {device.metadata.year}</p>
-              <div className="flex gap-1 mt-2">
-                {device.metadata.colors.map((c) => (
-                  <div
-                    key={c.hex}
-                    className="w-4 h-4 rounded-full border border-surface-700"
-                    style={{ backgroundColor: c.hex }}
-                    title={c.name}
-                  />
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-1 mt-2">
-                {device.metadata.tags.slice(0, 3).map((tag) => (
-                  <span key={tag} className="px-1.5 py-0.5 bg-surface-800 rounded text-[10px] text-surface-500">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <Tabs defaultValue="library">
+        <TabsList>
+          <TabsTrigger value="library" className="gap-1.5">
+            <Library className="size-3.5" />
+            Library ({devices.length})
+          </TabsTrigger>
+          <TabsTrigger value="create" className="gap-1.5">
+            <Plus className="size-3.5" />
+            Create New
+          </TabsTrigger>
+        </TabsList>
 
-      {activeTab === 'create' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left: Upload & Analysis */}
-          <div className="space-y-4">
-            {/* Upload */}
-            <div className="bg-surface-900 border border-surface-800 rounded-xl p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-surface-200 flex items-center gap-2">
-                <Upload size={14} />
-                Step 1: Upload Reference Images
-              </h3>
-
-              <div
-                {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${
-                  isDragActive
-                    ? 'border-primary-500 bg-primary-500/5'
-                    : 'border-surface-600 hover:border-surface-500'
-                }`}
-              >
-                <input {...getInputProps()} />
-                <Upload size={20} className="mx-auto mb-2 text-surface-500" />
-                <p className="text-xs text-surface-400">Drag images or click to browse (max 5)</p>
-              </div>
-
-              {uploadedImages.length > 0 && (
-                <div className="grid grid-cols-3 gap-2">
-                  {uploadedImages.map((img, i) => (
-                    <div key={i} className="relative group">
-                      <img src={img} alt={`Ref ${i + 1}`} className="w-full h-20 object-cover rounded-lg" />
-                      <button
-                        onClick={() => removeUploadedImage(i)}
-                        className="absolute top-1 right-1 p-0.5 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={10} className="text-white" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* AI Analysis */}
-            <div className="bg-surface-900 border border-surface-800 rounded-xl p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-surface-200 flex items-center gap-2">
-                <Zap size={14} />
-                Step 2: AI Analysis
-              </h3>
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleAnalyze('gemini-2.0-pro')}
-                  disabled={isAnalyzing || uploadedImages.length === 0}
-                  className="flex items-center justify-center gap-2 px-3 py-2.5 bg-yellow-500/10 border border-yellow-500/30
-                    rounded-lg text-sm font-medium text-yellow-400 hover:bg-yellow-500/20 disabled:opacity-50 transition-colors"
-                >
-                  {isAnalyzing ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
-                  Gemini Pro
-                </button>
-                <button
-                  onClick={() => handleAnalyze('gemini-2.0-flash')}
-                  disabled={isAnalyzing || uploadedImages.length === 0}
-                  className="flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-500/10 border border-blue-500/30
-                    rounded-lg text-sm font-medium text-blue-400 hover:bg-blue-500/20 disabled:opacity-50 transition-colors"
-                >
-                  {isAnalyzing ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
-                  Gemini Flash
-                </button>
-              </div>
-
-              {analysisText && (
-                <div className="mt-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle size={14} className="text-green-400" />
-                    <span className="text-xs text-green-400 font-medium">Analysis Complete</span>
+        {/* Library */}
+        <TabsContent value="library">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4">
+            {devices.map((device) => (
+              <Card key={device.metadata.id} className="py-0 gap-0 group hover:border-primary/30 transition-colors">
+                <CardContent className="p-4">
+                  <div className="w-full aspect-square rounded-lg bg-secondary/50 flex items-center justify-center mb-3 group-hover:bg-secondary transition-colors">
+                    {deviceIcon(device.metadata.category)}
                   </div>
-                  <pre className="p-3 bg-surface-800 rounded-lg text-xs text-surface-300 overflow-auto max-h-[300px] font-mono">
-                    {analysisText}
-                  </pre>
-                </div>
-              )}
-            </div>
-
-            {/* Generate Code */}
-            <div className="bg-surface-900 border border-surface-800 rounded-xl p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-surface-200 flex items-center gap-2">
-                <Code size={14} />
-                Step 3: Generate Component
-              </h3>
-
-              <button
-                onClick={handleGenerateCode}
-                disabled={isGenerating || !analysisText}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600
-                  disabled:opacity-50 rounded-lg text-sm font-medium text-white transition-colors"
-              >
-                {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Code size={14} />}
-                Generate Three.js Component
-              </button>
-            </div>
-
-            {/* Reset */}
-            <button
-              onClick={resetDeviceCreation}
-              className="flex items-center gap-2 text-xs text-surface-500 hover:text-surface-400 transition-colors"
-            >
-              <Trash2 size={12} />
-              Reset & Start Over
-            </button>
+                  <p className="text-xs font-semibold truncate">{device.metadata.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{device.metadata.brand}</p>
+                  <div className="flex gap-1 mt-2.5">
+                    {device.metadata.colors.map((c) => (
+                      <div key={c.hex} className="size-2.5 rounded-full border border-border" style={{ backgroundColor: c.hex }} />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
+        </TabsContent>
 
-          {/* Right: Code Preview */}
-          <div className="bg-surface-900 border border-surface-800 rounded-xl p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-surface-200 flex items-center gap-2">
-              <Eye size={14} />
-              Generated Code Preview
-            </h3>
-
-            {generatedCode ? (
-              <div className="space-y-3">
-                <pre className="p-4 bg-surface-950 rounded-lg text-xs text-surface-300 overflow-auto max-h-[600px] font-mono leading-relaxed">
-                  {generatedCode}
-                </pre>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(generatedCode)
-                      toast.success('Code copied to clipboard!')
-                    }}
-                    className="px-3 py-2 bg-surface-800 border border-surface-700 rounded-lg text-xs text-surface-400 hover:text-surface-300 transition-colors"
+        {/* Create */}
+        <TabsContent value="create">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+            {/* Left */}
+            <div className="space-y-6">
+              {/* Upload */}
+              <Card className="gap-0 py-0">
+                <CardHeader className="py-4 border-b">
+                  <CardTitle className="text-sm font-heading flex items-center gap-2">
+                    <CloudUpload className="size-4 text-primary" />
+                    Upload References
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 space-y-4">
+                  <div
+                    {...getRootProps()}
+                    className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
+                      }`}
                   >
-                    Copy Code
-                  </button>
-                  <button className="px-3 py-2 bg-green-500/10 border border-green-500/30 rounded-lg text-xs text-green-400 hover:bg-green-500/20 transition-colors">
-                    Save to Library
-                  </button>
+                    <input {...getInputProps()} />
+                    <CloudUpload className="size-8 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-sm font-medium">Drop images here</p>
+                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WEBP · Max 5 files</p>
+                  </div>
+
+                  {uploadedImages.length > 0 && (
+                    <div className="grid grid-cols-5 gap-2">
+                      {uploadedImages.map((img, i) => (
+                        <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border">
+                          <img src={img} alt={`Ref ${i + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            onClick={() => removeUploadedImage(i)}
+                            className="absolute inset-0 bg-background/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash2 className="size-4 text-destructive" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Analysis */}
+              <Card className="gap-0 py-0">
+                <CardHeader className="py-4 border-b">
+                  <CardTitle className="text-sm font-heading flex items-center gap-2">
+                    <Sparkles className="size-4 text-amber-500" />
+                    AI Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleAnalyze('gemini-2.0-pro')}
+                      disabled={isAnalyzing || uploadedImages.length === 0}
+                    >
+                      {isAnalyzing ? <Loader2 className="size-4 animate-spin" /> : <Zap className="size-4 text-amber-500" />}
+                      Gemini Pro
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleAnalyze('gemini-2.0-flash')}
+                      disabled={isAnalyzing || uploadedImages.length === 0}
+                    >
+                      {isAnalyzing ? <Loader2 className="size-4 animate-spin" /> : <Zap className="size-4 text-blue-500" />}
+                      Gemini Flash
+                    </Button>
+                  </div>
+
+                  {analysisText && (
+                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+                      <Badge variant="secondary" className="mb-2 gap-1">
+                        <CheckCircle2 className="size-3 text-emerald-500" />
+                        Analysis Complete
+                      </Badge>
+                      <ScrollArea className="h-48">
+                        <pre className="text-xs text-muted-foreground font-mono leading-relaxed whitespace-pre-wrap p-3 bg-secondary rounded-lg">
+                          {analysisText}
+                        </pre>
+                      </ScrollArea>
+                    </motion.div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Button variant="ghost" size="sm" onClick={resetDeviceCreation}>
+                <Trash2 className="size-3.5" />
+                Reset
+              </Button>
+            </div>
+
+            {/* Right - Code */}
+            <Card className="gap-0 py-0 flex flex-col">
+              <CardHeader className="py-4 border-b">
+                <CardTitle className="text-sm font-heading flex items-center gap-2">
+                  <Code2 className="size-4 text-accent-500" />
+                  Generated Code
+                </CardTitle>
+                {generatedCode && (
+                  <div className="col-start-2 row-span-2 row-start-1 self-center">
+                    <Badge variant="secondary" className="text-[10px]">Ready</Badge>
+                  </div>
+                )}
+              </CardHeader>
+
+              <CardContent className="p-4 flex-1 flex flex-col gap-4">
+                <Button onClick={handleGenerateCode} disabled={isGenerating || !analysisText}>
+                  {isGenerating ? <Loader2 className="size-4 animate-spin" /> : <Code2 className="size-4" />}
+                  Generate Three.js Component
+                </Button>
+
+                <div className="flex-1 min-h-[400px] rounded-lg bg-secondary p-4 overflow-auto">
+                  {generatedCode ? (
+                    <pre className="text-xs text-muted-foreground font-mono leading-relaxed whitespace-pre-wrap">{generatedCode}</pre>
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center gap-3 opacity-40">
+                      <Code2 className="size-10 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground text-center max-w-[180px]">
+                        Run AI analysis first, then generate the component code
+                      </p>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ) : (
-              <div className="h-[400px] flex items-center justify-center text-surface-600">
-                <div className="text-center">
-                  <Code size={32} className="mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Generated code will appear here</p>
-                  <p className="text-xs mt-1">Upload images and run analysis first</p>
-                </div>
-              </div>
-            )}
+
+                {generatedCode && (
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => { navigator.clipboard.writeText(generatedCode); toast.success('Copied!') }}
+                    >
+                      <Copy className="size-3.5" />
+                      Copy Code
+                    </Button>
+                    <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+                      <CheckCircle2 className="size-3.5" />
+                      Add to Library
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </div>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
